@@ -35,13 +35,12 @@ Head to the [Releases](../../releases/latest) page and download the binary for y
 ---
 
 ## How to Use
-
-1. **Export your save** with a save manager (e.g. JKSV / Ryujinx).
+1. **Backup** your savefolder
 2. **Open the tool** and select your PNG image.
 3. Set the **Item Type** and **Item ID** matching the file you want to replace.
-4. Set the **Ugc Folder** to the `Ugc` directory inside your extracted save.
+4. Set the **Ugc Folder** to the `Ugc` directory.
 5. Click **Convert & Export** — the tool writes both `.canvas.zs` and `.ugctex.zs` directly to your Ugc folder.
-6. **Re-import** the save and launch the game.
+6. (re)launch the game.
 
 ---
 
