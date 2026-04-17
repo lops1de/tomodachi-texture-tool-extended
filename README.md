@@ -19,6 +19,8 @@ A modern GUI tool for converting PNG images into Tomodachi Life: Living the Drea
 
 Head to the [Releases](../../releases/latest) page and download the binary for your platform:
 
+> **Windows Antivirus Warning:** Some antivirus tools (including Windows Defender) may flag the `.exe` as suspicious. This is a **false positive** caused by PyInstaller — the bundler used to package the app. The source code is fully open and auditable above. You can also build it yourself (see [Building from Source](#building-from-source)).
+
 | Platform | File |
 |----------|------|
 | Windows  | `TomodachiTextureTool-Windows.exe` |
