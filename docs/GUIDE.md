@@ -70,17 +70,17 @@ Start Tomodachi Life.
 
 ---
 
-**Step 9 — Go to the Werkstatt**
+**Step 9 — Go to the Workshop**
 
-Head to the **Werkstatt** (Workshop) building on your island.
+Head to the **Workshop** building on your island.
 
 ![](images/06_workshop.png)
 
 ---
 
-**Step 10 — Select Neue Kreation**
+**Step 10 — Select New Creation**
 
-Click on **Neue Kreation** (New Creation).
+Click on **New Creation**.
 
 ![](images/07_new_creation.png)
 
@@ -88,7 +88,7 @@ Click on **Neue Kreation** (New Creation).
 
 **Step 11 — Choose your item category**
 
-Pick the category that matches what you want to create. For this example we're going with **Schätze** (Treasures / Goods).
+Pick the category that matches what you want to create. For this example we're going with **Treasures** (Goods).
 
 ![](images/08_category.png)
 
@@ -96,7 +96,7 @@ Pick the category that matches what you want to create. For this example we're g
 
 **Step 12 — Choose the item type**
 
-Select the specific type within the category. Here we choose **Haustier** (Pet).
+Select the specific type within the category. Here we choose **Pet**.
 
 ![](images/26_pet_category.png)
 
@@ -104,7 +104,7 @@ Select the specific type within the category. Here we choose **Haustier** (Pet).
 
 **Step 13 — Pick any design option**
 
-It doesn't matter what you pick here — the texture will be replaced anyway. Choose **Frei gestalten** (Free design).
+It doesn't matter what you pick here — the texture will be replaced anyway. Choose **Free Design**.
 
 ![](images/09_free_design.png)
 
@@ -216,9 +216,9 @@ Click **Convert & Export**. When the green *Done* message appears, the files hav
 
 ## Part 4 — Apply the texture in-game
 
-**Step 27 — Launch the game and go to Kreationen**
+**Step 27 — Launch the game and go to Creations**
 
-Start Tomodachi Life again and head to **Werkstatt → Kreationen** (Creations).
+Start Tomodachi Life again and head to **Workshop → Creations**.
 
 ![](images/19_kreationen.png)
 
@@ -232,9 +232,9 @@ Select the item from the list.
 
 ---
 
-**Step 29 — Click Design ändern**
+**Step 29 — Click Change Design**
 
-You'll notice the custom texture is already there in the preview, but you still need to click **Design ändern** (Change Design) to properly apply it.
+You'll notice the custom texture is already there in the preview, but you still need to click **Change Design** to properly apply it.
 
 ![](images/21_design_change.png)
 
@@ -242,7 +242,7 @@ You'll notice the custom texture is already there in the preview, but you still 
 
 **Step 30 — Confirm without changing anything**
 
-The drawing editor will open with your texture loaded. Don't touch anything — just press **+** (Fertig / Done) to confirm.
+The drawing editor will open with your texture loaded. Don't touch anything — just press **+** (Done) to confirm.
 
 ![](images/22_editor_result.png)
 
