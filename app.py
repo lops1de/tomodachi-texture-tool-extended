@@ -87,8 +87,8 @@ def _slot_preview_source(slot: dict) -> tuple[Path, str] | None:
         return slot["ugctex"], "ugctex"
     if slot.get("canvas"):
         return slot["canvas"], "canvas"
-    if slot.get("ugctext"):
-        return slot["ugctext"], "ugctext"
+    if slot.get("thumb"):
+        return slot["thumb"], "thumb"
     return None
 
 
@@ -881,7 +881,7 @@ class App(ctk.CTk):
                 f"ID {id_str}\n"
                 f"canvas: {'yes' if slot['canvas'] else '—'}\n"
                 f"ugctex: {'yes' if slot['ugctex'] else '—'}\n"
-                f"thumb:  {'yes' if slot['ugctext'] else '—'}",
+                f"thumb:  {'yes' if slot['thumb'] else '—'}",
                 size=10,
                 color=MUTED2,
                 justify="left",
@@ -931,9 +931,9 @@ class App(ctk.CTk):
             if slot["ugctex"]:
                 im = converter.zs_file_to_png(slot["ugctex"], "ugctex")
                 im.save(out_p / f"{stem}.ugctex.png")
-            if slot["ugctext"]:
-                im = converter.zs_file_to_png(slot["ugctext"], "ugctext")
-                im.save(out_p / f"{stem}_Thumb.ugctext.png")
+            if slot["thumb"]:
+                im = converter.zs_file_to_png(slot["thumb"], "thumb")
+                im.save(out_p / f"{stem}_Thumb.ugctex.png")
             self._set_status(f"Exported to {out_p}", success=True)
         except Exception as e:
             self._set_status(f"Export failed: {e}", error=True)

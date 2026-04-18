@@ -14,7 +14,7 @@ If improvements stabilize and the upstream author wants them, they can be offere
 
 ## Features
 
-- Convert PNG → `.canvas.zs` + `.ugctex.zs`, and **`_Thumb.ugctext.zs`** for shop-listed types (automatically **off** for Facepaint, **on** for other item types)
+- Convert PNG → `.canvas.zs` + `.ugctex.zs`, and **`_Thumb.ugctex.zs`** for shop-listed types (automatically **off** for Facepaint, **on** for other item types)
 - Item types: Facepaint, Goods, Clothes, Exterior, Interior, MapObject, MapFloor, Food
 - **Browse / Export** tab: list UGC in your save, preview, export PNGs, **Use for import** to jump to Import with the same slot
 - **Profile** selector (`…/0/Ugc`, `1/Ugc`, …) and **Sync exports to all profiles**
@@ -61,7 +61,7 @@ See **[docs/GUIDE.md](docs/GUIDE.md)** for a longer walkthrough.
 | Item type | Canvas | UgcTex | Shop thumbnail (non-facepaint) |
 |-----------|--------|--------|--------------------------------|
 | Facepaint | `UgcFacePaintXXX…` | `…` | (not written) |
-| Others | `…canvas.zs` | `…ugctex.zs` | `…_Thumb.ugctext.zs` |
+| Others | `…canvas.zs` | `…ugctex.zs` | `…_Thumb.ugctex.zs` |
 
 `XXX` = zero-padded ID (e.g. `002`).
 

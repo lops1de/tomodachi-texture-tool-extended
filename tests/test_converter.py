@@ -28,7 +28,7 @@ def test_ugctex_roundtrip():
 
 def test_thumb_roundtrip_and_size():
     img = Image.new("RGBA", (64, 64), (1, 2, 3, 255))
-    raw = c.png_to_ugctext_thumb(img, False, 2)
+    raw = c.png_to_thumb_ugctex(img, False, 2)
     assert len(raw) == c.thumb_file_expected_size()
     out = c.zs_bytes_to_png_thumb(raw)
     assert out.size == c.THUMB_SIZE
@@ -45,10 +45,10 @@ def test_convert_and_export_writes_three():
         )
         assert cp.name == "UgcGoods007.canvas.zs"
         assert up.name == "UgcGoods007.ugctex.zs"
-        assert tp and tp.name == "UgcGoods007_Thumb.ugctext.zs"
+        assert tp and tp.name == "UgcGoods007_Thumb.ugctex.zs"
         c.zs_file_to_png(cp, "canvas")
         c.zs_file_to_png(up, "ugctex")
-        c.zs_file_to_png(tp, "ugctext")
+        c.zs_file_to_png(tp, "thumb")
 
 
 def test_list_ugc_profiles_direct_ugc():

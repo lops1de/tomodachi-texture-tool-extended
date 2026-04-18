@@ -24,42 +24,42 @@ ITEM_TYPES: dict[str, dict[str, str]] = {
     "facepaint": {
         "canvas": "UgcFacePaint{id}.canvas.zs",
         "ugctex": "UgcFacePaint{id}.ugctex.zs",
-        "ugctext": "UgcFacePaint{id}_Thumb.ugctext.zs",
+        "thumb": "UgcFacePaint{id}_Thumb.ugctex.zs",
     },
     "goods": {
         "canvas": "UgcGoods{id}.canvas.zs",
         "ugctex": "UgcGoods{id}.ugctex.zs",
-        "ugctext": "UgcGoods{id}_Thumb.ugctext.zs",
+        "thumb": "UgcGoods{id}_Thumb.ugctex.zs",
     },
     "clothes": {
         "canvas": "UgcCloth{id}.canvas.zs",
         "ugctex": "UgcCloth{id}.ugctex.zs",
-        "ugctext": "UgcCloth{id}_Thumb.ugctext.zs",
+        "thumb": "UgcCloth{id}_Thumb.ugctex.zs",
     },
     "exterior": {
         "canvas": "UgcExterior{id}.canvas.zs",
         "ugctex": "UgcExterior{id}.ugctex.zs",
-        "ugctext": "UgcExterior{id}_Thumb.ugctext.zs",
+        "thumb": "UgcExterior{id}_Thumb.ugctex.zs",
     },
     "interior": {
         "canvas": "UgcInterior{id}.canvas.zs",
         "ugctex": "UgcInterior{id}.ugctex.zs",
-        "ugctext": "UgcInterior{id}_Thumb.ugctext.zs",
+        "thumb": "UgcInterior{id}_Thumb.ugctex.zs",
     },
     "mapobject": {
         "canvas": "UgcMapObject{id}.canvas.zs",
         "ugctex": "UgcMapObject{id}.ugctex.zs",
-        "ugctext": "UgcMapObject{id}_Thumb.ugctext.zs",
+        "thumb": "UgcMapObject{id}_Thumb.ugctex.zs",
     },
     "mapfloor": {
         "canvas": "UgcMapFloor{id}.canvas.zs",
         "ugctex": "UgcMapFloor{id}.ugctex.zs",
-        "ugctext": "UgcMapFloor{id}_Thumb.ugctext.zs",
+        "thumb": "UgcMapFloor{id}_Thumb.ugctex.zs",
     },
     "food": {
         "canvas": "UgcFood{id}.canvas.zs",
         "ugctex": "UgcFood{id}.ugctex.zs",
-        "ugctext": "UgcFood{id}_Thumb.ugctext.zs",
+        "thumb": "UgcFood{id}_Thumb.ugctex.zs",
     },
 }
 
@@ -96,8 +96,8 @@ def png_to_canvas(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
     return png_to_rgba_swizzled(img, CANVAS_SIZE, use_srgb, resize_mode)
 
 
-def png_to_ugctext_thumb(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
-    """Shop thumbnail: 128x128 RGBA swizzled (same as canvas layout)."""
+def png_to_thumb_ugctex(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
+    """Shop thumbnail: 128x128 RGBA swizzled → *_Thumb.ugctex.zs (same layout as canvas)."""
     return png_to_rgba_swizzled(img, THUMB_SIZE, use_srgb, resize_mode)
 
 
@@ -186,14 +186,14 @@ def zs_bytes_to_png_thumb(data: bytes) -> Image.Image:
 
 def zs_file_to_png(path: Path, kind: str) -> Image.Image:
     """
-    kind: 'canvas' | 'ugctex' | 'ugctext' (thumb).
+    kind: 'canvas' | 'ugctex' (512 DXT1) | 'thumb' (128 RGBA shop icon).
     """
     data = zstd_decompress_file(path)
     if kind == "canvas":
         return zs_bytes_to_png_canvas(data)
     if kind == "ugctex":
         return zs_bytes_to_png_ugctex(data)
-    if kind == "ugctext":
+    if kind == "thumb":
         return zs_bytes_to_png_thumb(data)
     raise ValueError(f"Unknown kind: {kind}")
 
@@ -247,17 +247,17 @@ def scan_ugc_slot(
     id_str = str(item_id).zfill(3)
     canvas = ugc_folder / t["canvas"].format(id=id_str)
     ugctex = ugc_folder / t["ugctex"].format(id=id_str)
-    ugctext = ugc_folder / t["ugctext"].format(id=id_str)
+    thumb = ugc_folder / t["thumb"].format(id=id_str)
     return {
         "id": item_id,
         "canvas": canvas if canvas.is_file() else None,
         "ugctex": ugctex if ugctex.is_file() else None,
-        "ugctext": ugctext if ugctext.is_file() else None,
+        "thumb": thumb if thumb.is_file() else None,
     }
 
 
 def list_ugc_ids_for_mode(ugc_folder: Path, mode: str) -> list[int]:
-    """IDs that have at least one of canvas / ugctex / ugctext for this mode."""
+    """IDs that have at least one of canvas / ugctex / thumb for this mode."""
     t = ITEM_TYPES[mode]
     prefix_ugctex, suffix_ugctex = t["ugctex"].split("{id}")
     ids: set[int] = set()
@@ -270,7 +270,7 @@ def list_ugc_ids_for_mode(ugc_folder: Path, mode: str) -> list[int]:
         rest = f.name[len(prefix_c) : -len(suffix_c)]
         if rest.isdigit():
             ids.add(int(rest))
-    prefix_th, suffix_th = t["ugctext"].split("{id}")
+    prefix_th, suffix_th = t["thumb"].split("{id}")
     for f in ugc_folder.glob(f"{prefix_th}*{suffix_th}"):
         rest = f.name[len(prefix_th) : -len(suffix_th)]
         if rest.isdigit():
@@ -313,7 +313,7 @@ def convert_and_export(
     thumb_data: bytes | None = None
     if write_thumb:
         progress("Converting shop thumbnail…", 0.55)
-        thumb_data = png_to_ugctext_thumb(img.copy(), use_srgb, resize_mode)
+        thumb_data = png_to_thumb_ugctex(img.copy(), use_srgb, resize_mode)
 
     progress("Compressing (ZSTD)…", 0.75)
     canvas_zs = zstd_compress(canvas_data)
@@ -330,7 +330,7 @@ def convert_and_export(
     ugctex_path.write_bytes(ugctex_zs)
 
     if thumb_zs is not None:
-        thumb_path = output_dir / templates["ugctext"].format(id=id_str)
+        thumb_path = output_dir / templates["thumb"].format(id=id_str)
         thumb_path.write_bytes(thumb_zs)
 
     progress("Done!", 1.0)
