@@ -1,96 +1,119 @@
-# TTT (Tomodachi Texture Tool)
+# Tomodachi Texture Tool (extended fork)
 
-A modern GUI tool for converting PNG images into Tomodachi Life: Living the Dream's custom texture formats — no command line required.
+A GUI tool for converting PNG images into **Tomodachi Life: Living the Dream** custom UGC texture files (`.canvas.zs`, `.ugctex.zs`, and shop thumbnails where needed) — no command line required.
+
+## About this fork
+
+This repository is a **fork** of **[farbensplasch/tomodachi-texture-tool](https://github.com/farbensplasch/tomodachi-texture-tool)**. It adds features such as browse/export, Ryujinx save-path defaults, shop-thumbnail handling by item type, and multi-profile sync. Development here is **vibe-coded** (AI-assisted iteration) and kept **separate from upstream** so experimental or opinionated changes are not pushed into the original project without the maintainer’s review.
+
+If improvements stabilize and the upstream author wants them, they can be offered as focused pull requests. Until then, treat **this repo as the fork** and **upstream as the canonical base**.
+
+**License respect:** This project stays under the **MIT License** (see [LICENSE](LICENSE)). Keep the MIT text and copyright notices in distributions. The upstream app remains **Copyright (c) farbensplasch**; note your own copyright for fork-specific changes if you redistribute builds. Third-party credits in [Credits](#credits) (e.g. pyswizzle, TomoKore research) must remain intact. This is an independent tool — it is **not** affiliated with or endorsed by Nintendo.
 
 ---
 
 ## Features
 
-- Convert any PNG into game-ready `.canvas.zs` + `.ugctex.zs` files
-- Supports all UGC item types: Facepaint, Goods, Clothes, Exterior, Interior, MapObject, MapFloor, Food
-- Automatic ZSTD compression
-- Shows the highest existing item ID in your save folder
-- Drag-and-drop support
-- Works on Windows, macOS, and Linux
+- Convert PNG → `.canvas.zs` + `.ugctex.zs`, and **`_Thumb.ugctext.zs`** for shop-listed types (automatically **off** for Facepaint, **on** for other item types)
+- Item types: Facepaint, Goods, Clothes, Exterior, Interior, MapObject, MapFloor, Food
+- **Browse / Export** tab: list UGC in your save, preview, export PNGs, **Use for import** to jump to Import with the same slot
+- **Profile** selector (`…/0/Ugc`, `1/Ugc`, …) and **Sync exports to all profiles**
+- **Default save path** when `%APPDATA%\Ryujinx\bis\user\save\0000000000000001` (or the Linux/macOS equivalents) exists and matches the expected Ryujinx layout
+- ZSTD compression, highest-ID hint, drag-and-drop PNG
+- Windows, macOS, and Linux (same scope as [upstream releases](https://github.com/farbensplasch/tomodachi-texture-tool/releases))
 
 ---
 
 ## Download
 
-Head to the [Releases](../../releases/latest) page and download the binary for your platform:
+Use **[Releases](../../releases)** on **this fork** for binaries built from this branch. For the **original** v1.0.x builds, see [upstream releases](https://github.com/farbensplasch/tomodachi-texture-tool/releases).
 
-> **Windows Antivirus Warning:** Some antivirus tools (including Windows Defender) may flag the `.exe` as suspicious. This is a **false positive** caused by PyInstaller — the bundler used to package the app. The source code is fully open and auditable above. You can also build it yourself (see [Building from Source](#building-from-source)).
+> **Windows antivirus:** PyInstaller `.exe` files are often flagged as generic malware (**false positive**). Prefer building from source if you need to verify the binary.
 
-| Platform | File |
-|----------|------|
-| Windows  | `TomodachiTextureTool-Windows.exe` |
-| macOS    | `TomodachiTextureTool-macOS` |
-| Linux    | `TomodachiTextureTool-Linux` |
-
-> **macOS / Linux:** you may need to mark the file as executable first:
-> ```sh
-> chmod +x TomodachiTextureTool-*
-> ```
-
-> **macOS Gatekeeper:** right-click → Open the first time if you get a security warning.
-
----
-
-## How to Use
-
-For a full step-by-step guide with screenshots, check out the **[Guide](docs/GUIDE.md)**.
-
-1. **Backup** your savefolder
-2. **Open the tool** and select your PNG image.
-3. Set the **Item Type** and **Item ID** matching the file you want to replace.
-4. Set the **Ugc Folder** to the `Ugc` directory.
-5. Click **Convert & Export** — the tool writes both `.canvas.zs` and `.ugctex.zs` directly to your Ugc folder.
-6. (re)launch the game.
-
----
-
-## File Naming Reference
-
-| Item Type  | Canvas                        | UgcTex                        |
-|------------|-------------------------------|-------------------------------|
-| Facepaint  | `UgcFacePaintXXX.canvas.zs`  | `UgcFacePaintXXX.ugctex.zs`  |
-| Goods      | `UgcGoodsXXX.canvas.zs`      | `UgcGoodsXXX.ugctex.zs`      |
-| Clothes    | `UgcClothXXX.canvas.zs`      | `UgcClothXXX.ugctex.zs`      |
-| Exterior   | `UgcExteriorXXX.canvas.zs`   | `UgcExteriorXXX.ugctex.zs`   |
-| Interior   | `UgcInteriorXXX.canvas.zs`   | `UgcInteriorXXX.ugctex.zs`   |
-| MapObject  | `UgcMapObjectXXX.canvas.zs`  | `UgcMapObjectXXX.ugctex.zs`  |
-| MapFloor   | `UgcMapFloorXXX.canvas.zs`   | `UgcMapFloorXXX.ugctex.zs`   |
-| Food       | `UgcFoodXXX.canvas.zs`       | `UgcFoodXXX.ugctex.zs`       |
-
-`XXX` = zero-padded item ID (e.g. `002`).
-
----
-
-## Building from Source
-
-**Requirements:** Python 3.11+
+| Platform | Typical artifact |
+|----------|------------------|
+| Windows  | `TomodachiTextureTool.exe` (from PyInstaller; you may rename, e.g. `TomodachiTextureTool-Windows.exe`) |
+| macOS    | `TomodachiTextureTool.app` (from the `.spec` bundle step) |
+| Linux    | `TomodachiTextureTool` one-file binary |
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/tomodachi-texture-tool.git
+chmod +x TomodachiTextureTool
+```
+
+On macOS, if Gatekeeper blocks the app: **System Settings → Privacy & Security** → allow, or right-click → **Open** the first time.
+
+---
+
+## How to use
+
+See **[docs/GUIDE.md](docs/GUIDE.md)** for a longer walkthrough.
+
+**Safety:** Back up your save. Close Ryujinx (or lock-producing tools) while writing files.
+
+**Import:** Choose PNG, item type and ID, set **Save / Ugc** (auto-filled when the default Ryujinx path exists), pick **Profile** if needed, then **Convert & Export**.
+
+**Browse / Export:** Refresh the list, **Export PNGs** or **Use for import** to align Import with a row.
+
+---
+
+## File naming (reference)
+
+| Item type | Canvas | UgcTex | Shop thumbnail (non-facepaint) |
+|-----------|--------|--------|--------------------------------|
+| Facepaint | `UgcFacePaintXXX…` | `…` | (not written) |
+| Others | `…canvas.zs` | `…ugctex.zs` | `…_Thumb.ugctext.zs` |
+
+`XXX` = zero-padded ID (e.g. `002`).
+
+---
+
+## Building from source
+
+**Requirements:** Python 3.11+, dependencies in `requirements.txt`.
+
+```sh
+git clone <your-fork-url>
 cd tomodachi-texture-tool
 pip install -r requirements.txt
 python main.py
 ```
 
-To build a standalone executable:
+```sh
+pip install pytest
+pytest tests/
+```
+
+### Standalone executables (PyInstaller)
+
+Same **three platforms** as upstream: build **on each OS** you want to ship (PyInstaller does not cross-compile Windows ↔ macOS ↔ Linux from one machine).
 
 ```sh
 pip install pyinstaller
-# Windows
+```
+
+**Windows**
+
+```bat
 build.bat
-# macOS / Linux
+```
+
+Output: `dist\TomodachiTextureTool.exe`
+
+**macOS / Linux**
+
+```sh
 bash build.sh
 ```
+
+- **Linux:** `dist/TomodachiTextureTool` (single executable).
+- **macOS:** `dist/TomodachiTextureTool.app` (bundle); the one-file `TomodachiTextureTool` executable is also produced — distribute the `.app` for a standard macOS experience.
+
+Zip or archive artifacts per platform for GitHub Releases. Naming can mirror upstream (e.g. `TomodachiTextureTool-Windows.exe`, `TomodachiTextureTool-macOS.zip`, `TomodachiTextureTool-Linux`) for consistency.
 
 ---
 
 ## Credits
 
-- Nintendo Switch texture swizzle algorithm based on [Aclios/pyswizzle](https://github.com/Aclios/pyswizzle) (MIT)
-- File format research by [Timimimi](https://github.com/Timiimiimii/TomoKoreFacepaintTool) and RealDarkCraft
-- Made by **farbensplasch**
+- **[farbensplasch](https://github.com/farbensplasch)** — original **Tomodachi Texture Tool**
+- Nintendo Switch texture swizzle — [Aclios/pyswizzle](https://github.com/Aclios/pyswizzle) (MIT)
+- Format research — [Timimimi](https://github.com/Timiimiimii/TomoKoreFacepaintTool) / RealDarkCraft

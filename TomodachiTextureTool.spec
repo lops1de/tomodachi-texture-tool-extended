@@ -1,5 +1,18 @@
+import os
 import sys
+
 from PyInstaller.utils.hooks import collect_all, collect_data_files
+
+# Paths relative to this .spec file (PyInstaller sets SPEC).
+SPEC_DIR = os.path.dirname(os.path.abspath(SPEC))
+
+# Optional icons: add files to /assets — see README "Application icon".
+# Windows one-file .exe uses .ico; macOS .app bundle can use .icns.
+WIN_ICON = os.path.join(SPEC_DIR, "assets", "app.ico")
+MAC_ICON = os.path.join(SPEC_DIR, "assets", "app.icns")
+EXE_ICON_KW = {}
+if os.path.isfile(WIN_ICON):
+    EXE_ICON_KW["icon"] = WIN_ICON
 
 # customtkinter ships theme JSON files that must be bundled
 ctk_datas, ctk_bins, ctk_hidden = collect_all("customtkinter")
@@ -44,18 +57,22 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,      # no terminal window
+    console=False,  # no terminal window
     windowed=True,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    **EXE_ICON_KW,
 )
 
 # macOS: also wrap in a .app bundle
+# Change bundle_identifier if you publish under your own developer identity.
 if sys.platform == "darwin":
-    app = BUNDLE(
-        exe,
-        name="TomodachiTextureTool.app",
-        bundle_identifier="com.farbensplasch.tomodachi-texture-tool",
-    )
+    BUNDLE_KW = {
+        "name": "TomodachiTextureTool.app",
+        "bundle_identifier": "com.farbensplasch.tomodachi-texture-tool",
+    }
+    if os.path.isfile(MAC_ICON):
+        BUNDLE_KW["iconfile"] = MAC_ICON
+    app = BUNDLE(exe, **BUNDLE_KW)

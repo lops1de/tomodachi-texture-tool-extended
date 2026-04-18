@@ -1,9 +1,9 @@
 @echo off
 echo Installing build dependencies...
-pip install pyinstaller
+python -m pip install pyinstaller
 echo.
 echo Building...
-pyinstaller TomodachiTextureTool.spec
+python -m PyInstaller TomodachiTextureTool.spec
 echo.
 echo Done! Executable is at: dist\TomodachiTextureTool.exe
 pause

@@ -2,10 +2,10 @@
 set -e
 
 echo "Installing build dependencies..."
-pip install pyinstaller
+python3 -m pip install pyinstaller
 
 echo "Building..."
-pyinstaller TomodachiTextureTool.spec
+python3 -m PyInstaller TomodachiTextureTool.spec
 
 echo ""
 echo "Done! Executable is at: dist/TomodachiTextureTool"
