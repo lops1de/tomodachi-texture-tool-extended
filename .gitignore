@@ -33,11 +33,23 @@ env/
 .DS_Store
 Thumbs.db
 
-# Test files
-*.canvas
-*.ugctex
-*.canvas.zs
-*.ugctex.zs
+# Local experiments / probes (keep out of version control)
+_thumb_probe/
+pairs/
+thumb-candidates/
+
+# Optional local reference trees (add with git add -f if you need them tracked)
+third_party_refs/
+
+# Optional local tools dropped in repo root
+astcenc.exe
+astcenc-avx2.exe
+astcenc-sse2.exe
+astcenc-sse4.1.exe
+astcenc
+astcenc-avx2
+astcenc-sse2
+*.astc
 
 # Local planning notes (not for the remote repo)
 featureplanning.md

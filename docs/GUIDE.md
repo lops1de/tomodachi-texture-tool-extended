@@ -1,6 +1,10 @@
 # How to Use — Tomodachi Texture Tool
 
-This guide shows you how to replace the texture of any custom item in Tomodachi Life: Living the Dream with your own image.
+This guide shows you how to replace the texture of any custom item in **Tomodachi Life: Living the Dream** with your own PNG.
+
+**Extended fork:** This version is built to **just work** end-to-end. When you **Convert & Export**, it writes every file the game expects — including **shop listing thumbnails** for item types that use them (everything except Facepaint). You should **not** need to open the in-game editor only to “fix” a broken shop icon. Use the **Browse / Export** tab to see what you already made, export PNGs, or use **Use for import** to jump back to **Import** with the same slot selected.
+
+If your **Ugc** path is filled in automatically (common when using Ryujinx’s usual save layout), you can skip manually copying the folder path.
 
 ---
 
@@ -10,7 +14,7 @@ This guide shows you how to replace the texture of any custom item in Tomodachi 
 
 Open Ryujinx and locate Tomodachi Life: Living the Dream.
 
-![](images/02_game_icon.png)
+
 
 ---
 
@@ -18,15 +22,15 @@ Open Ryujinx and locate Tomodachi Life: Living the Dream.
 
 Right-click the game and select **Open User Save Directory**.
 
-![](images/03_open_save_dir.png)
+
 
 ---
 
 **Step 3 — Copy the Ugc folder path**
 
-A folder will open. Navigate into the **Ugc** subfolder and copy its full path — you'll need it in a moment.
+A folder will open. Navigate into the **Ugc** subfolder and copy its full path. *(If the tool already shows the correct **Ugc** path for you, you can keep that instead.)*
 
-![](images/01_save_folder.png)
+
 
 ---
 
@@ -34,7 +38,7 @@ A folder will open. Navigate into the **Ugc** subfolder and copy its full path �
 
 Launch the tool by double-clicking the exe.
 
-![](images/04_tool_exe.png)
+
 
 ---
 
@@ -42,13 +46,13 @@ Launch the tool by double-clicking the exe.
 
 Paste the path you copied into the **Ugc Folder** field.
 
-![](images/05_tool_empty.png)
+
 
 ---
 
 **Step 6 — It should look like this**
 
-![](images/14_ugc_folder.png)
+
 
 ---
 
@@ -56,7 +60,7 @@ Paste the path you copied into the **Ugc Folder** field.
 
 Select the item type you want to replace. Pay close attention to the **highest** number shown — this is how many items of that type you currently have. You'll use this to verify the next steps went correctly.
 
-![](images/24_goods_highest.png)
+
 
 ---
 
@@ -66,7 +70,7 @@ Select the item type you want to replace. Pay close attention to the **highest**
 
 Start Tomodachi Life.
 
-![](images/25_game_shortcut.png)
+
 
 ---
 
@@ -74,7 +78,7 @@ Start Tomodachi Life.
 
 Head to the **Workshop** building on your island.
 
-![](images/06_workshop.png)
+
 
 ---
 
@@ -82,7 +86,7 @@ Head to the **Workshop** building on your island.
 
 Click on **New Creation**.
 
-![](images/07_new_creation.png)
+
 
 ---
 
@@ -90,7 +94,7 @@ Click on **New Creation**.
 
 Pick the category that matches what you want to create. For this example we're going with **Treasures** (Goods).
 
-![](images/08_category.png)
+
 
 ---
 
@@ -98,7 +102,7 @@ Pick the category that matches what you want to create. For this example we're g
 
 Select the specific type within the category. Here we choose **Pet**.
 
-![](images/26_pet_category.png)
+
 
 ---
 
@@ -106,7 +110,7 @@ Select the specific type within the category. Here we choose **Pet**.
 
 It doesn't matter what you pick here — the texture will be replaced anyway. Choose **Free Design**.
 
-![](images/09_free_design.png)
+
 
 ---
 
@@ -114,7 +118,7 @@ It doesn't matter what you pick here — the texture will be replaced anyway. Ch
 
 You can leave the canvas blank or scribble something — it doesn't matter, it will get replaced. For this tutorial we write **TTT** so it's easy to recognize.
 
-![](images/10_draw.png)
+
 
 ---
 
@@ -122,7 +126,7 @@ You can leave the canvas blank or scribble something — it doesn't matter, it w
 
 Enter whatever name you want the item to have in-game.
 
-![](images/11_name.png)
+
 
 ---
 
@@ -130,7 +134,7 @@ Enter whatever name you want the item to have in-game.
 
 Just pick whatever fits. This is only for how the game refers to the item in text.
 
-![](images/27_gender_plural.png)
+
 
 ---
 
@@ -138,7 +142,7 @@ Just pick whatever fits. This is only for how the game refers to the item in tex
 
 Again, pick whatever you like here.
 
-![](images/12_properties.png)
+
 
 ---
 
@@ -146,7 +150,7 @@ Again, pick whatever you like here.
 
 Your item is now created. It's recommended to buy it immediately so it gets added to a Mii's inventory.
 
-![](images/13_item_done.png)
+
 
 ---
 
@@ -154,7 +158,7 @@ Your item is now created. It's recommended to buy it immediately so it gets adde
 
 Here we bought 2 copies as an example.
 
-![](images/28_receipt.png)
+
 
 ---
 
@@ -162,31 +166,31 @@ Here we bought 2 copies as an example.
 
 Depending on what you created, either give it to a Mii or place it somewhere on the island.
 
-![](images/29_mii_inventory.png)
+
 
 ---
 
 **Step 21 — Looking good**
 
-![](images/30_mii_holding.png)
+
 
 ---
 
 ## Part 3 — Verify and convert
 
-**Step 22 — Switch to a different item type in the tool**
+**Step 22 — Refresh so the new item shows up**
 
-Go back to the Tomodachi Texture Tool and temporarily switch to any other item type. This forces the tool to refresh.
+Go back to the Tomodachi Texture Tool. On **Browse / Export**, click **Refresh list** so the list and IDs are up to date. *(On the Import tab, switching to another item type and back also updates the highest-ID hint.)*
 
-![](images/31_facepaint_none.png)
+
 
 ---
 
-**Step 23 — Switch back and check the highest ID**
+**Step 23 — Check the highest ID**
 
-Now switch back to the item type you created. The highest number should have gone up by 1 — for example from **002** to **003**. If it did, everything is correct. **Save the game and close it before continuing — this is important!**
+Select the **item type** you used in-game. The **highest** number should have gone up by 1 — for example from **002** to **003**. If it did, you’re on the right slot. **Save the game and close it before continuing — this is important!**
 
-![](images/15_highest_id.png)
+
 
 ---
 
@@ -194,7 +198,7 @@ Now switch back to the item type you created. The highest number should have gon
 
 Click the image box or **Browse PNG** and select the image you want to use as the texture.
 
-![](images/16_browse_png.png)
+
 
 ---
 
@@ -202,25 +206,25 @@ Click the image box or **Browse PNG** and select the image you want to use as th
 
 Make sure the **Item ID** matches the highest number shown. Your image will appear as a preview.
 
-![](images/17_tool_ready.png)
+
 
 ---
 
 **Step 26 — Convert & Export**
 
-Click **Convert & Export**. When the green *Done* message appears, the files have been written to your Ugc folder. You can close the tool now if you want.
+Click **Convert & Export**. When the green *Done* message appears, your **canvas** and **ugctex** files are saved. For types that use shop listings, the tool also writes the **thumbnail** (`…_Thumb.ugctex.zs`) so icons match your image — you should not need a separate in-game “fix” just for the listing picture. You can close the tool if you want.
 
-![](images/18_tool_done.png)
+
 
 ---
 
-## Part 4 — Apply the texture in-game
+## Part 4 — See it in-game
 
 **Step 27 — Launch the game and go to Creations**
 
 Start Tomodachi Life again and head to **Workshop → Creations**.
 
-![](images/19_kreationen.png)
+
 
 ---
 
@@ -228,32 +232,32 @@ Start Tomodachi Life again and head to **Workshop → Creations**.
 
 Select the item from the list.
 
-![](images/20_item_list.png)
+
 
 ---
 
-**Step 29 — Click Change Design**
+**Step 29 — Your texture should already appear**
 
-You'll notice the custom texture is already there in the preview, but you still need to click **Change Design** to properly apply it.
+Previews and lists (including shop-style screens, where that applies) should show your custom image. Use or place the item as usual — you do **not** need to open the editor first only to “apply” a texture you exported from this tool.
 
-![](images/21_design_change.png)
+
 
 ---
 
-**Step 30 — Confirm without changing anything**
+**Step 30 — (Optional) Open Change Design**
 
-The drawing editor will open with your texture loaded. Don't touch anything — just press **+** (Done) to confirm.
+Use **Change Design** only if you want to **edit further** in the game’s drawing tools. If you’re happy with your PNG, you can skip this step entirely.
 
-![](images/22_editor_result.png)
+
 
 ---
 
 **Step 31 — Done!**
 
-Your Mii now has the item with the custom texture applied. Have fun!
+Your Mii can use the item with your custom texture. Have fun!
 
-![](images/23_final_result.png)
+
 
 ---
 
-> The same process works for every item type — just make sure the **Item Type** in the tool matches what you created in-game.
+> The same flow works for every supported **item type** — match the **Item Type** in the tool to what you created in-game. Anytime, use **Browse / Export** to review or re-export textures from your save.

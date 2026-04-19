@@ -16,7 +16,52 @@ ZSTD_LEVEL = 16
 
 CANVAS_SIZE = (256, 256)
 UGCTEX_SIZE = (512, 512)
-THUMB_SIZE = (128, 128)
+# Shop *_Thumb.ugctex.zs breakthrough:
+# payload is 65,536 bytes that matches 256x256 BC3/DXT5 blocks (16 bytes per 4x4 block),
+# arranged in Tegra block-linear order at the block level.
+THUMB_SIZE = (128, 128)  # preview/UI size
+THUMB_CODEC_SIZE = (256, 256)  # on-disk thumb texture dimensions
+THUMB_BLOCK = (4, 4)
+THUMB_BLOCK_BYTES = 16
+THUMB_TEGRA_BLOCK_HEIGHT = 8
+
+
+def _thumb_inverse_perm(order: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+    inv = [0, 0, 0, 0]
+    for out_idx, src_idx in enumerate(order):
+        inv[src_idx] = out_idx
+    return tuple(inv)  # type: ignore[return-value]
+
+
+def _decode_legacy_thumb_128_tile8(disk: bytes) -> bytes:
+    """
+    Decode older experimental thumbs: 128×128, 8×8 tiles, row-major inside tile,
+    X-major tile order, ABGR channel packing on disk.
+    """
+    w, h = THUMB_SIZE
+    t = 8
+    order = (3, 2, 1, 0)  # ABGR
+    inv = _thumb_inverse_perm(order)
+    n = w * h * 4
+    if len(disk) != n:
+        raise ValueError(f"Expected {n} bytes on disk, got {len(disk)}")
+    out = bytearray(n)
+    tile_bytes = t * t * 4
+    tile_ord = 0
+    for tx in range(w // t):
+        for ty in range(h // t):
+            base = tile_ord * tile_bytes
+            for y in range(t):
+                for x in range(t):
+                    px, py = tx * t + x, ty * t + y
+                    di = (py * w + px) * 4
+                    idx = y * t + x
+                    ii = base + idx * 4
+                    p = disk[ii : ii + 4]
+                    out[di : di + 4] = bytes((p[inv[0]], p[inv[1]], p[inv[2]], p[inv[3]]))
+            tile_ord += 1
+    return bytes(out)
+
 
 # File name templates per item type.
 # {id} is replaced with the zero-padded ID.
@@ -96,11 +141,6 @@ def png_to_canvas(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
     return png_to_rgba_swizzled(img, CANVAS_SIZE, use_srgb, resize_mode)
 
 
-def png_to_thumb_ugctex(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
-    """Shop thumbnail: 128x128 RGBA swizzled → *_Thumb.ugctex.zs (same layout as canvas)."""
-    return png_to_rgba_swizzled(img, THUMB_SIZE, use_srgb, resize_mode)
-
-
 def png_to_ugctex(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
     """Convert a PIL image to a raw swizzled UGCTEX blob (512x512 DXT1)."""
     img = img.convert("RGBA")
@@ -166,6 +206,153 @@ def _dxt1_dds_file(width: int, height: int, dxt1_payload: bytes) -> bytes:
     return bytes(header) + dxt1_payload
 
 
+def _dxt5_dds_file(width: int, height: int, dxt5_payload: bytes) -> bytes:
+    """Minimal DDS container so Pillow can decode DXT5 payload."""
+    pitch = max(1, (width + 3) // 4) * 16
+    header = bytearray(128)
+    struct.pack_into("<4s", header, 0, b"DDS ")
+    struct.pack_into("<I", header, 4, 124)
+    struct.pack_into("<I", header, 8, 0x81007)
+    struct.pack_into("<I", header, 12, height)
+    struct.pack_into("<I", header, 16, width)
+    struct.pack_into("<I", header, 20, pitch)
+    struct.pack_into("<I", header, 24, 1)
+    struct.pack_into("<I", header, 76, 32)
+    struct.pack_into("<I", header, 80, 4)
+    struct.pack_into("<4s", header, 84, b"DXT5")
+    struct.pack_into("<I", header, 104, 0x1000)
+    return bytes(header) + dxt5_payload
+
+
+def _div_round_up(n: int, d: int) -> int:
+    return (n + d - 1) // d
+
+
+def _tegra_get_addr_block_linear(
+    x: int,
+    y: int,
+    image_width: int,
+    bytes_per_element: int,
+    base_address: int,
+    block_height: int,
+) -> int:
+    image_width_in_gobs = _div_round_up(image_width * bytes_per_element, 64)
+    gob_address = (
+        base_address
+        + (y // (8 * block_height)) * 512 * block_height * image_width_in_gobs
+        + (x * bytes_per_element // 64) * 512 * block_height
+        + (y % (8 * block_height) // 8) * 512
+    )
+    xb = x * bytes_per_element
+    return (
+        gob_address
+        + ((xb % 64) // 32) * 256
+        + ((y % 8) // 2) * 64
+        + ((xb % 32) // 16) * 32
+        + (y % 2) * 16
+        + (xb % 16)
+    )
+
+
+def _tegra_deswizzle_elements(
+    tiled: bytes,
+    width_elems: int,
+    height_elems: int,
+    bytes_per_element: int,
+    block_height: int,
+) -> bytes:
+    out = bytearray(width_elems * height_elems * bytes_per_element)
+    n = len(tiled)
+    for y in range(height_elems):
+        for x in range(width_elems):
+            src = _tegra_get_addr_block_linear(
+                x, y, width_elems, bytes_per_element, 0, block_height
+            )
+            dst = (y * width_elems + x) * bytes_per_element
+            if src + bytes_per_element <= n:
+                out[dst : dst + bytes_per_element] = tiled[src : src + bytes_per_element]
+            else:
+                out[dst : dst + bytes_per_element] = b"\x00" * bytes_per_element
+    return bytes(out)
+
+
+def _tegra_swizzle_elements(
+    linear: bytes,
+    width_elems: int,
+    height_elems: int,
+    bytes_per_element: int,
+    block_height: int,
+) -> bytes:
+    out = bytearray(width_elems * height_elems * bytes_per_element)
+    n = len(out)
+    for y in range(height_elems):
+        for x in range(width_elems):
+            src = (y * width_elems + x) * bytes_per_element
+            dst = _tegra_get_addr_block_linear(
+                x, y, width_elems, bytes_per_element, 0, block_height
+            )
+            if dst + bytes_per_element <= n:
+                out[dst : dst + bytes_per_element] = linear[src : src + bytes_per_element]
+    return bytes(out)
+
+
+def _thumb_bc3_payload_from_rgba256(im256: Image.Image) -> bytes:
+    """
+    Encode RGBA 256x256 -> DXT5/BC3 blocks -> Tegra block-linear (BH8) block order.
+    """
+    im = im256.convert("RGBA")
+    if im.size != THUMB_CODEC_SIZE:
+        im = im.resize(THUMB_CODEC_SIZE, Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, format="DDS", pixel_format="DXT5")
+    dxt5_linear = buf.getvalue()[128:]
+    w, h = THUMB_CODEC_SIZE
+    bw, bh = THUMB_BLOCK
+    wb, hb = w // bw, h // bh
+    return _tegra_swizzle_elements(
+        dxt5_linear,
+        wb,
+        hb,
+        THUMB_BLOCK_BYTES,
+        THUMB_TEGRA_BLOCK_HEIGHT,
+    )
+
+
+def _thumb_bc3_payload_to_rgba256(data: bytes) -> Image.Image:
+    w, h = THUMB_CODEC_SIZE
+    bw, bh = THUMB_BLOCK
+    wb, hb = w // bw, h // bh
+    dxt5_linear = _tegra_deswizzle_elements(
+        data,
+        wb,
+        hb,
+        THUMB_BLOCK_BYTES,
+        THUMB_TEGRA_BLOCK_HEIGHT,
+    )
+    dds = _dxt5_dds_file(w, h, dxt5_linear)
+    return Image.open(io.BytesIO(dds)).convert("RGBA")
+
+
+def _looks_like_bc3_thumb(data: bytes) -> bool:
+    """
+    Heuristic for 65,536-byte thumb payload ambiguity:
+    BC3 blocks usually have relatively low per-lane cardinality in byte lanes 12..15
+    (2-bit color index field), unlike raw RGBA payloads.
+    """
+    if len(data) != 65536:
+        return False
+    lane_vals = [set() for _ in range(4)]  # lanes 12..15
+    mv = memoryview(data)
+    for i in range(0, len(data), 16):
+        lane_vals[0].add(mv[i + 12])
+        lane_vals[1].add(mv[i + 13])
+        lane_vals[2].add(mv[i + 14])
+        lane_vals[3].add(mv[i + 15])
+        if any(len(s) > 192 for s in lane_vals):
+            return False
+    return True
+
+
 def zs_bytes_to_png_canvas(data: bytes) -> Image.Image:
     raw = nsw_deswizzle(data, CANVAS_SIZE, (1, 1), 4, SWIZZLE_MODE)
     return Image.frombytes("RGBA", CANVAS_SIZE, raw, "raw")
@@ -178,15 +365,52 @@ def zs_bytes_to_png_ugctex(data: bytes) -> Image.Image:
     return im.convert("RGBA")
 
 
+def thumb_payload_from_canvas_swizzled(canvas_swizzled: bytes) -> bytes:
+    """
+    Shop listing thumbnail bytes (65536), encoded as BC3/DXT5 in Tegra block-linear order.
+    """
+    im256 = zs_bytes_to_png_canvas(canvas_swizzled)
+    return _thumb_bc3_payload_from_rgba256(im256)
+
+
+def thumb_payload_from_ugctex_swizzled(ugctex_swizzled: bytes) -> bytes:
+    """
+    Alternate thumb source: decode ``ugctex`` -> 512² RGBA -> 256² LANCZOS -> BC3/Tegra.
+    """
+    im512 = zs_bytes_to_png_ugctex(ugctex_swizzled)
+    im256 = im512.resize(THUMB_CODEC_SIZE, Image.LANCZOS)
+    return _thumb_bc3_payload_from_rgba256(im256)
+
+
+def png_to_thumb_ugctex(img: Image.Image, use_srgb: bool, resize_mode: int) -> bytes:
+    """Encode a shop thumb from ``img`` via the ugctex->BC3/Tegra pipeline."""
+    return thumb_payload_from_ugctex_swizzled(png_to_ugctex(img, use_srgb, resize_mode))
+
+
 def zs_bytes_to_png_thumb(data: bytes) -> Image.Image:
-    """128x128 RGBA thumbnail (shop icon)."""
-    raw = nsw_deswizzle(data, THUMB_SIZE, (1, 1), 4, SWIZZLE_MODE)
-    return Image.frombytes("RGBA", THUMB_SIZE, raw, "raw")
+    """Decode *_Thumb.ugctex.zs (BC3/Tegra BH8; legacy raw-128 and legacy DXT1 fallback)."""
+    n = len(data)
+    if n == THUMB_SIZE[0] * THUMB_SIZE[1] * 4:
+        # Preferred: BC3/DXT5 blocks in Tegra block-linear order.
+        if _looks_like_bc3_thumb(data):
+            try:
+                return _thumb_bc3_payload_to_rgba256(data)
+            except Exception:
+                pass
+        # Legacy experimental raw 128×128 tile8 path.
+        raw = _decode_legacy_thumb_128_tile8(data)
+        return Image.frombytes("RGBA", THUMB_SIZE, raw, "raw")
+    if n == ugctex_file_expected_size():
+        return zs_bytes_to_png_ugctex(data)
+    raise ValueError(
+        f"Unknown thumb payload size: {n} (expected "
+        f"{THUMB_SIZE[0] * THUMB_SIZE[1] * 4} or {ugctex_file_expected_size()})"
+    )
 
 
 def zs_file_to_png(path: Path, kind: str) -> Image.Image:
     """
-    kind: 'canvas' | 'ugctex' (512 DXT1) | 'thumb' (128 RGBA shop icon).
+    kind: 'canvas' | 'ugctex' (512 DXT1) | 'thumb' (shop thumb or legacy ugctex-sized).
     """
     data = zstd_decompress_file(path)
     if kind == "canvas":
@@ -198,8 +422,94 @@ def zs_file_to_png(path: Path, kind: str) -> Image.Image:
     raise ValueError(f"Unknown kind: {kind}")
 
 
+def thumb_shop_preview_png(slot: dict) -> Image.Image | None:
+    """128×128 preview: LANCZOS of decoded ``canvas`` if present, else ``ugctex`` (matches written thumb)."""
+    if slot.get("canvas"):
+        im = zs_file_to_png(slot["canvas"], "canvas")
+        return im.resize((128, 128), Image.LANCZOS)
+    if slot.get("ugctex"):
+        im = zs_file_to_png(slot["ugctex"], "ugctex")
+        return im.resize((128, 128), Image.LANCZOS)
+    return None
+
+
+def export_ugc_slot_pngs(
+    out_dir: Path,
+    slot: dict,
+    mode: str,
+    item_id: int,
+) -> tuple[list[Path], list[str]]:
+    """
+    Decode existing .zs files in ``slot`` to PNGs under ``out_dir``.
+    Each asset is written independently; one failure does not skip the others.
+
+    Writes (when the corresponding file exists):
+    ``{stem}.canvas.png``, ``{stem}.ugctex.png``,
+    and for shop thumbnails ``{stem}_Thumb.png`` plus ``{stem}_Thumb_zs_decode.png``
+    when a ``*_Thumb.ugctex.zs`` file exists.
+
+    Returns (paths written, error messages).
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    t = ITEM_TYPES[mode]
+    id_str = str(item_id).zfill(3)
+    stem = t["ugctex"].format(id=id_str).replace(".ugctex.zs", "")
+
+    jobs: list[tuple[str, Path | None, str, str]] = [
+        ("canvas", slot.get("canvas"), "canvas", f"{stem}.canvas.png"),
+        ("ugctex", slot.get("ugctex"), "ugctex", f"{stem}.ugctex.png"),
+    ]
+
+    written: list[Path] = []
+    errors: list[str] = []
+    for label, zs_path, kind, filename in jobs:
+        if not zs_path:
+            continue
+        dest = out_dir / filename
+        try:
+            im = zs_file_to_png(zs_path, kind)
+            im.save(dest)
+            written.append(dest)
+        except Exception as e:
+            errors.append(f"{label} → {filename}: {e}")
+
+    if slot.get("thumb"):
+        preview = thumb_shop_preview_png(slot)
+        if preview is not None:
+            dest = out_dir / f"{stem}_Thumb.png"
+            try:
+                preview.save(dest)
+                written.append(dest)
+            except Exception as e:
+                errors.append(f"thumb preview → {dest.name}: {e}")
+            try:
+                raw = zs_file_to_png(slot["thumb"], "thumb")
+                dest_raw = out_dir / f"{stem}_Thumb_zs_decode.png"
+                raw.save(dest_raw)
+                written.append(dest_raw)
+            except Exception as e:
+                errors.append(f"thumb zs decode → {dest_raw.name}: {e}")
+        else:
+            dest = out_dir / f"{stem}_Thumb.png"
+            try:
+                im = zs_file_to_png(slot["thumb"], "thumb")
+                im.save(dest)
+                written.append(dest)
+            except Exception as e:
+                errors.append(f"thumb → {dest.name}: {e}")
+
+    return written, errors
+
+
+def ugctex_file_expected_size() -> int:
+    """Decompressed DXT1 swizzled payload size for 512×512 ugctex."""
+    w, h = UGCTEX_SIZE
+    return (w * h // 16) * 8
+
+
 def thumb_file_expected_size() -> int:
-    """Decompressed RGBA swizzled thumb size (for validation)."""
+    """Decompressed shop thumb payload size (currently BC3 blocks for 256×256)."""
     w, h = THUMB_SIZE
     return w * h * 4
 
@@ -313,7 +623,7 @@ def convert_and_export(
     thumb_data: bytes | None = None
     if write_thumb:
         progress("Converting shop thumbnail…", 0.55)
-        thumb_data = png_to_thumb_ugctex(img.copy(), use_srgb, resize_mode)
+        thumb_data = thumb_payload_from_ugctex_swizzled(ugctex_data)
 
     progress("Compressing (ZSTD)…", 0.75)
     canvas_zs = zstd_compress(canvas_data)

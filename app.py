@@ -82,11 +82,11 @@ def _display_for_mode(mode_lower: str) -> str:
 
 
 def _slot_preview_source(slot: dict) -> tuple[Path, str] | None:
-    """Prefer ugctex, then canvas, then shop thumb for a visual preview."""
-    if slot.get("ugctex"):
-        return slot["ugctex"], "ugctex"
+    """Prefer canvas (matches shop thumb), then ugctex, then literal thumb file."""
     if slot.get("canvas"):
         return slot["canvas"], "canvas"
+    if slot.get("ugctex"):
+        return slot["ugctex"], "ugctex"
     if slot.get("thumb"):
         return slot["thumb"], "thumb"
     return None
@@ -193,7 +193,7 @@ class App(ctk.CTk):
         stripe.pack(side="left", fill="y")
 
         _lbl(hdr, "Tomodachi Texture Tool", size=15, weight="bold").pack(side="left", padx=16)
-        _lbl(hdr, "v1.0.0", size=11, color=MUTED).pack(side="right", padx=18)
+        _lbl(hdr, "v1.1.0", size=11, color=MUTED).pack(side="right", padx=18)
 
     def _build_save_location(self, parent):
         c = _card(parent)
@@ -921,20 +921,23 @@ class App(ctk.CTk):
         if not out:
             return
         out_p = Path(out)
-        id_str = str(item_id).zfill(3)
-        t = converter.ITEM_TYPES[mode]
-        stem = t["ugctex"].format(id=id_str).replace(".ugctex.zs", "")
         try:
-            if slot["canvas"]:
-                im = converter.zs_file_to_png(slot["canvas"], "canvas")
-                im.save(out_p / f"{stem}.canvas.png")
-            if slot["ugctex"]:
-                im = converter.zs_file_to_png(slot["ugctex"], "ugctex")
-                im.save(out_p / f"{stem}.ugctex.png")
-            if slot["thumb"]:
-                im = converter.zs_file_to_png(slot["thumb"], "thumb")
-                im.save(out_p / f"{stem}_Thumb.ugctex.png")
-            self._set_status(f"Exported to {out_p}", success=True)
+            written, errs = converter.export_ugc_slot_pngs(out_p, slot, mode, item_id)
+            if not written and not errs:
+                self._set_status("Nothing to export — no .zs files for this slot.", error=True)
+            elif not written and errs:
+                self._set_status(f"Export failed: {'; '.join(errs)}", error=True)
+            elif errs:
+                self._set_status(
+                    f"Exported {len(written)} file(s) to {out_p} — "
+                    f"errors: {'; '.join(errs)}",
+                    success=True,
+                )
+            else:
+                self._set_status(
+                    f"Exported {len(written)} file(s) to {out_p}",
+                    success=True,
+                )
         except Exception as e:
             self._set_status(f"Export failed: {e}", error=True)
 
